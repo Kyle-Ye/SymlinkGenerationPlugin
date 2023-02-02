@@ -1,0 +1,35 @@
+#!/usr/bin/xcrun --sdk macosx swift
+
+import Foundation
+
+func main() throws {
+    let arguments = CommandLine.arguments
+    guard arguments.count == 3 else {
+        print("Usage: SymlinkGeneration <input path> <output path>")
+        return
+    }
+
+    let (inputPath, outputPath) = (arguments[1], arguments[2])
+
+    let input = URL(fileURLWithPath: inputPath)
+    let output = URL(fileURLWithPath: outputPath)
+
+    let fileManager = FileManager.default
+
+    if let enumerator = fileManager.enumerator(at: input, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles, .skipsPackageDescendants]) {
+        for case let fileURL as URL in enumerator {
+            if fileURL.pathExtension == "h" {
+                let fileName = fileURL.lastPathComponent
+                let inputFilePath = fileURL
+                let outputFilePath = output.appending(path: fileName)
+                do {
+                    try fileManager.createSymbolicLink(at: outputFilePath, withDestinationURL: inputFilePath)
+                } catch {
+                    print("Error while creating symlinks: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+}
+
+try? main()
